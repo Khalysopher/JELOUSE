@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jilous Luxury</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Tajawal', sans-serif; }</style>
+</head>
+<body class="bg-gray-100">
+
+    <header class="bg-black text-white p-6 border-b-4 border-red-600 text-center">
+        <h1 class="text-3xl font-black italic tracking-widest">JILOUS LUXURY</h1>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+        <div id="grid-products" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+    </main>
+
+    <div id="popup" class="fixed inset-0 bg-black bg-opacity-70 hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-white p-6 rounded-2xl w-full max-w-sm shadow-xl">
+            <h2 id="product-title" class="text-xl font-black text-red-600 mb-4"></h2>
+            <form id="order-form" onsubmit="sendToWhatsApp(event)" class="space-y-3">
+                <input type="text" id="cust-name" placeholder="الاسم واللقب" required class="w-full p-2 border border-gray-300 rounded">
+                <input type="text" id="cust-state" placeholder="الولاية" required class="w-full p-2 border border-gray-300 rounded">
+                <input type="tel" id="cust-phone" placeholder="رقم الهاتف" required class="w-full p-2 border border-gray-300 rounded">
+                <input type="text" id="cust-address" placeholder="العنوان" required class="w-full p-2 border border-gray-300 rounded">
+                <button type="submit" class="w-full bg-green-600 text-white py-3 rounded-lg font-black text-lg">تأكيد الطلب عبر واتساب</button>
+                <button type="button" onclick="closePopup()" class="w-full bg-gray-200 py-2 rounded-lg text-gray-700">إلغاء</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // تأكد أن الرابط ينتهي بـ ?output=csv
+        const url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTvXtwiA2f_zrqbGU_tn4Yu1dmTWHG01RuaW80BQdHAGvm13Z8GcKGkBhYVn5WdAs9GzgrDwSNQPvWy/pub?output=csv";
+        let selectedProduct = "";
+
+        async function fetchProducts() {
+            try {
+                const response = await fetch(url);
+                const data = await response.text();
+                const rows = data.split('\n').slice(1);
+                const grid = document.getElementById('grid-products');
+                
+                rows.forEach(row => {
+                    const cols = row.split(',').map(c => c.replace(/^"(.*)"$/, '$1').trim());
+                    if (cols.length >= 3) {
+                        const productDiv = document.createElement('div');
+                        productDiv.className = "bg-white p-3 rounded-xl shadow border cursor-pointer hover:shadow-lg transition";
+                        productDiv.onclick = () => openPopup(cols[0]);
+                        productDiv.innerHTML = `
+                            <img src="${cols[2]}" class="w-full h-40 object-cover rounded-lg mb-2">
+                            <h3 class="font-bold text-sm truncate">${cols[0]}</h3>
+                            <p class="text-red-600 font-black">${cols[1]} دج</p>
+                        `;
+                        grid.appendChild(productDiv);
+                    }
+                });
+            } catch (err) { console.error("خطأ:", err); }
+        }
+
+        function openPopup(title) {
+            selectedProduct = title;
+            document.getElementById('product-title').innerText = "طلب: " + title;
+            document.getElementById('popup').classList.remove('hidden');
+        }
+
+        function closePopup() {
+            document.getElementById('popup').classList.add('hidden');
+        }
+
+        function sendToWhatsApp(e) {
+            e.preventDefault();
+            const name = document.getElementById('cust-name').value;
+            const state = document.getElementById('cust-state').value;
+            const phone = document.getElementById('cust-phone').value;
+            const address = document.getElementById('cust-address').value;
+            
+            const msg = `أريد طلب منتج: ${selectedProduct}%0Aالاسم: ${name}%0Aالولاية: ${state}%0Aالهاتف: ${phone}%0Aالعنوان: ${address}`;
+            window.open(`https://wa.me/213774218406?text=${msg}`, '_blank');
+            closePopup();
+        }
+
+        fetchProducts();
+    </script>
+</body>
+</html>
